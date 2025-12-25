@@ -33,150 +33,119 @@ Publish the website in the given URL.
 
 ## PROGRAM :
 ```
-HTML
+bmi.html
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Interest Calculator</title>
+    <title>BMI Calculator</title>
     <style>
-        {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: Arial, sans-serif;
-    background-color: white;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-}
-
-.container {
-    width: 400px;
-    padding: 70px;
-    background: white;
-    box-shadow: 0px 4px 6px black;
-    border-radius: 8px;
-    text-align: center;
-}
-
-h1 {
-    margin-bottom: 20px;
-    font-size: 1.5em;
-    color: rgb(58, 58, 58);
-}
-
-form {
-    display: flex;
-    flex-direction: column;
-}
-
-.form-group {
-    margin-bottom: 15px;
-}
-
-label {
-    display: block;
-    margin-bottom: 5px;
-    font-size: 0.9em;
-    color: rgb(58, 58, 58);
-}
-
-input {
-    width: 100%;
-    padding: 10px;
-    font-size: 1em;
-    border: 1px solid white;
-    border-radius: 5px;
-}
-
-input#result {
-    background-color: white;
-    cursor: not-allowed;
-}
-
-button {
-    width: 106%;
-    padding: 10px;
-    background-color: rgb(0, 123, 255);
-    color: white;
-    font-size: 1em;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-button:hover {
-    background-color:rgb(0, 86, 179);
-}
+        body { font-family: Arial; padding: 20px; }
+        form {
+            width: 300px;
+            padding: 20px;
+            border: 1px solid #888;
+            border-radius: 8px;
+            margin-left: 50%;
+            transform: translateX(-50%);
+        }
+        input { width: 100%; margin: 10px 0; padding: 8px; }
+        .result { margin-top: 20px; padding: 10px; background: #f1f1f1; }
     </style>
 </head>
+
 <body>
-    <div class="container">
-        <h1>Simple Interest Calculator</h1>
-        <form method="POST">
-            {% csrf_token %}
-            <label for="principal">Principal Amount (P):</label>
-            <input type="number" id="principal" name="principal" required>
+    <h2 align="center">BMI Calculator (Server-side in Django)</h2>
 
-            <label for="rate">Rate of Interest (R):</label>
-            <input type="number" id="rate" name="rate" required>
+    <form method="POST">
+        {% csrf_token %}
+        <label>Weight (kg)</label>
+        <input type="number" step="0.1" name="weight" required>
 
-            <label for="time">Time (T in years):</label>
-            <input type="number" id="time" name="time" required><br>
+        <label>Height (cm)</label>
+        <input type="number" step="0.1" name="height" required>
 
-            <button type="submit">Calculate</button>
-        </form>
-
-        {% if simple_interest is not None %}
+        <button type="submit">Calculate BMI</button>
+        {% if bmi %}
         <div class="result">
-            <h2>Result:</h2>
-            <p>Simple Interest: {{ simple_interest }}</p>
+            <strong>Your BMI:</strong> {{ bmi }}<br>
+            <strong>Category:</strong> {{ category }}
         </div>
         {% endif %}
-    </div>
+    </form>
+
+    
 </body>
 </html>
 
-views.py
+views.html
 from django.shortcuts import render
 
-def simple_interest_calculator(request):
-    simple_interest = None
-    if request.method == 'POST':
-    
-        principal = float(request.POST.get('principal', 0))
-        rate = float(request.POST.get('rate', 0))
-        time = float(request.POST.get('time', 0))
+# Create your views here.
+def bmi_calculator(request):
+    bmi = None
+    category = None
 
-        simple_interest = (principal * rate * time) / 100
+    if request.method == "POST":
+        weight = float(request.POST.get("weight"))
+        height = float(request.POST.get("height"))
 
-    return render(request, 'simple_interest.html', {'simple_interest': simple_interest})
+        # Convert height from cm to meters
+        height_m = height / 100
 
-urls.py
+        # BMI formula
+        bmi = weight / (height_m ** 2)
+        bmi = round(bmi, 2)
+
+        # Classification
+        if bmi < 18.5:
+            category = "Underweight"
+        elif 18.5 <= bmi < 24.9:
+            category = "Normal weight"
+        elif 25 <= bmi < 29.9:
+            category = "Overweight"
+        else:
+            category = "Obesity"
+
+    return render(request, "bmi.html", {
+        "bmi": bmi,
+        "category": category
+    })
+urls.html
+"""
+URL configuration for Bmiproject project.
+
+The `urlpatterns` list routes URLs to views. For more information please see:
+    https://docs.djangoproject.com/en/5.2/topics/http/urls/
+Examples:
+Function views
+    1. Add an import:  from my_app import views
+    2. Add a URL to urlpatterns:  path('', views.home, name='home')
+Class-based views
+    1. Add an import:  from other_app.views import Home
+    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
+Including another URLconf
+    1. Import the include() function: from django.urls import include, path
+    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
+"""
 from django.contrib import admin
 from django.urls import path
-from formula import views
+from bmi_app import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('simplei/', views.simple_interest_calculator, name='simple_interest_calculator'),
+    path('bmi', views.bmi_calculator, name='bmi'),
 ]
+
 
 ```
 
 ## SERVER SIDE PROCESSING:
 
-![serverside](https://github.com/user-attachments/assets/0ad364b1-0647-4358-8e8b-e32713978d63)
+ ![alt text](image-1.png)
 
 ## HOMEPAGE:
 
-![homepage](https://github.com/user-attachments/assets/130a29fb-6561-44ab-bf37-0c5e1dcb8825)
+![alt text](image.png)
 
 ## RESULT:
 The program for performing server side processing is completed successfully.
